@@ -1,7 +1,8 @@
 class Dot {
-  float x;
-  float y;
-  float radius;
+  private float x;
+  private float y;
+  private float radius;
+  
   Dot(float x, float y, float radius) {
     this.x = x;
     this.y = y;
@@ -16,12 +17,25 @@ class Dot {
     return x;
   }
   
+  void setX(float x) {
+    this.x = x;
+  }
+  
   float getY() {
     return y;
+  }
+    
+  void setY(float y) {
+    this.y = y;
   }
   
   float getRadius() {
     return radius;
   }
+  
+  void setRadius(float radius) {
+      this.radius = radius;
+  }
+ 
   
 }
