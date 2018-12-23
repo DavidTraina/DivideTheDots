@@ -8,11 +8,12 @@ private float MIN_DOT_SIZE;
 static PImage photo;
 
 void setup() {
-  size(1000,1000);
+  noStroke();
+  size(1000, 1000);
   ellipseMode(RADIUS);
   frameRate(120);
   MIN_DOT_SIZE = min(height, width) / 128;
-  photo = loadImage("giraffe.jpg");
+  photo = loadImage("zebra.jpg");
   photo.resize(width, height);
   dots.add(new Dot(width / 2, height / 2, width / 2));
 }
@@ -34,15 +35,13 @@ void draw() {
 }
 
 void divide(Dot dot) {
-      float halfRadius = dot.getRadius() / 2;
-      newDividedDots.add(new Dot(dot.getX() + halfRadius, dot.getY() - halfRadius, halfRadius)); // Top Left
-      newDividedDots.add(new Dot(dot.getX() - halfRadius, dot.getY() + halfRadius, halfRadius)); // Bottom Left
-      newDividedDots.add(new Dot(dot.getX() + halfRadius, dot.getY() + halfRadius, halfRadius)); // Bottom Right
-      
-      // Convert dot to top left
-      dot.setX(dot.getX() - halfRadius);
-      dot.setY(dot.getY() - halfRadius);
-      dot.setRadius(halfRadius);
-}
+  float halfRadius = dot.getRadius() / 2;
+  newDividedDots.add(new Dot(dot.getX() + halfRadius, dot.getY() - halfRadius, halfRadius)); // Top Left
+  newDividedDots.add(new Dot(dot.getX() - halfRadius, dot.getY() + halfRadius, halfRadius)); // Bottom Left
+  newDividedDots.add(new Dot(dot.getX() + halfRadius, dot.getY() + halfRadius, halfRadius)); // Bottom Right
 
- 
+  // Convert dot to top left
+  dot.setX(dot.getX() - halfRadius);
+  dot.setY(dot.getY() - halfRadius);
+  dot.setRadius(halfRadius);
+}
