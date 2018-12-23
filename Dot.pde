@@ -2,14 +2,17 @@ class Dot {
   private float x;
   private float y;
   private float radius;
+  color dotColor;
+  //private static final PImage photo1 = DivideTheDots.photo;
   
   Dot(float x, float y, float radius) {
     this.x = x;
     this.y = y;
-    this.radius = radius;
+    setRadius(radius);
   }
   
   void drawDot() {
+    fill(dotColor);
     ellipse(x, y, radius, radius);
   }
   
@@ -34,8 +37,26 @@ class Dot {
   }
   
   void setRadius(float radius) {
-      this.radius = radius;
+      this.radius = radius;   
+      calculateColor();
   }
- 
   
+   private void calculateColor() {
+    photo.loadPixels();
+     float r = 0;
+     float g = 0;
+     float b = 0;
+     for (int i = 0; i < 2 * round(radius); i++) {
+       for (int j = 0; j < 2 * round(radius); j++) {
+         //The equivalent statement to get(x, y) using pixels[] is pixels[y*width+x]. so, == get(x - radius + i, y - radius + j)
+         r += red(photo.get(round(x - radius + i), round(y - radius + j)));
+         g += green(photo.get(round(x - radius + i), round(y - radius + j)));
+         b += blue(photo.get(round(x - radius + i), round(y - radius + j)));
+       }
+     }
+     r = r / (4*radius*radius);
+     g = g / (4*radius*radius);
+     b = b / (4*radius*radius);
+     this.dotColor = color(r, g, b);
+  }
 }

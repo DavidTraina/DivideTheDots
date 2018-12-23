@@ -5,13 +5,16 @@ private float old_y = 0;
 private LinkedList<Dot> dots = new LinkedList<Dot>();
 private final ArrayList<Dot> newDividedDots = new ArrayList<Dot>(3);
 private float MIN_DOT_SIZE;
+static PImage photo;
 
 void setup() {
   size(1000,1000);
   ellipseMode(RADIUS);
   frameRate(120);
+  MIN_DOT_SIZE = min(height, width) / 128;
+  photo = loadImage("giraffe.jpg");
+  photo.resize(width, height);
   dots.add(new Dot(width / 2, height / 2, width / 2));
-  MIN_DOT_SIZE = min(height, width) / 64;
 }
 
 void draw() {
@@ -40,5 +43,6 @@ void divide(Dot dot) {
       dot.setX(dot.getX() - halfRadius);
       dot.setY(dot.getY() - halfRadius);
       dot.setRadius(halfRadius);
-
 }
+
+ 
