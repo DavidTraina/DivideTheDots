@@ -3,6 +3,8 @@ class Dot {
   private float y;
   private float radius;
   color dotColor;
+  int framesUntilDivisible; // Does not allow Dot to be divided for a few frames after dividing so dots don't rapidly divide.
+  final int MAX_FRAMES_UNTIL_DIVISIBLE = 3;
 
   Dot(float x, float y, float radius) {
     this.x = x;
@@ -13,6 +15,9 @@ class Dot {
   void drawDot() {
     fill(dotColor);
     ellipse(x, y, radius, radius);
+    if (framesUntilDivisible > 0) {
+      framesUntilDivisible--;
+    }
   }
 
   float getX() {
@@ -38,6 +43,7 @@ class Dot {
   void setRadius(float radius) {
     this.radius = radius;   
     calculateColor();
+    framesUntilDivisible = MAX_FRAMES_UNTIL_DIVISIBLE;
   }
 
   private void calculateColor() {
@@ -45,16 +51,24 @@ class Dot {
     float r = 0;
     float g = 0;
     float b = 0;
-    for (int i = 0; i < 2 * round(radius); i++) {
-      for (int j = 0; j < 2 * round(radius); j++) {
-        r += red(photo.get(round(x - radius + i), round(y - radius + j)));
-        g += green(photo.get(round(x - radius + i), round(y - radius + j)));
-        b += blue(photo.get(round(x - radius + i), round(y - radius + j)));
+    int rRadius = round(radius);
+    int rx = round(x);
+    int ry = round(y);
+    for (int i = 0; i < 2 * rRadius; i++) {
+      for (int j = 0; j < 2 * rRadius; j++) {
+        r += red(photo.get(rx - rRadius + i, ry - rRadius + j));
+        g += green(photo.get(rx - rRadius + i, ry - rRadius + j));
+        b += blue(photo.get(rx - rRadius + i, ry - rRadius + j));
       }
     }
-    r = r / (4*radius*radius);
-    g = g / (4*radius*radius);
-    b = b / (4*radius*radius);
+    int numIterations = (4*rRadius*rRadius);
+    r /= numIterations;
+    g /= numIterations;
+    b /= numIterations;
     this.dotColor = color(r, g, b);
+  }
+  
+  boolean isDivisible() {
+    return framesUntilDivisible == 0 && radius > MIN_DOT_SIZE;
   }
 }
