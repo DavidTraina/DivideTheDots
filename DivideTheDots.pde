@@ -1,11 +1,10 @@
 /**
-* A game where the user moves the cursor to divide the single starting dot into successivly smaller dots. 
-* The dots act like pixels to reveal a picture.
-*/
+ * A game where the user moves the cursor to divide the single starting dot into successivly smaller dots. 
+ * The dots act like pixels to reveal a picture.
+ */
 
 //TODO: make image random and have an image select mode, animation
 import java.util.LinkedList;
-
 
 /**
  * The maximum number of times a dot can be divided.
@@ -53,19 +52,41 @@ PVector cursorPath;
  * Sets up the program, runs one time only on start-up.
  */
 void setup() {
-  size(1000, 1000);
+   String photoName;
+  /**
+   * Set true for a random photo each time the program starts.
+   */
+  boolean randomImage = true;
+  if (!randomImage) {
+    //////////////////////////////////
+    // CHANGE BACKGROUND IMAGE HERE //
+    //                              //
+    // Make sure to set randomImage //
+    // to flase above.              //
+    //                              //
+    // NOTE: Image should be square //
+    // or it will appear distorted. //
+    //////////////////////////////////
+    photoName = "giraffe.jpg";
+  } else {
+    // Change path to images as required, should be in data folder.
+    File pathToImages = new File("C:\\Users\\David\\Dropbox\\Processing\\DivideTheDots\\data");
+    String[] photoNames = pathToImages.list();
+    photoName = photoNames[floor(random(photoNames.length))];
+  }
+  photo = loadImage(photoName);
+
+  // Cannot use variables in size(), assuming displayHeight < dislayWidth;
+  size(displayHeight, displayHeight); 
+
+  photo.resize(width, height);
+
   frameRate(100);
 
   smooth(2);
   noStroke();
   ellipseMode(RADIUS);
   rectMode(CENTER);
-
-  //////////////////////////////////
-  // CHANGE BACKGROUND IMAGE HERE //
-  //////////////////////////////////
-  photo = loadImage("hippo.jpg");
-  photo.resize(width, height);
 
   oldX = mouseX;
   oldY = mouseY;
