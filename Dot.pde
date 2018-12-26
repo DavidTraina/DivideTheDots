@@ -2,6 +2,7 @@
  * A Dot; represented as a single circle on-screen.
  */
 class Dot {
+
   /**
    * The x position of the center of the Dot.
    */
@@ -30,27 +31,61 @@ class Dot {
   /**
    * The minimal amount of time between divisions, in milliseconds. Prevents the appearence of rapid multiple-division.
    */
-  public static final long DELAY_UNTIL_DIVISIBLE = 100;
+  public static final int ANIMATION_TIME = 210;  
+
+
 
   /**
    * Create a new Dot. This counts as a division because we call setRadius().
    *
-   * @param x      The x position of the center of the Dot.
-   * @param y      The y position of the center of the Dot.
-   * @param radius The radius of the DOt, in pixels.
+   * @param x            The x position of the center of the Dot.
+   * @param y            The y position of the center of the Dot.
+   * @param oldDotX      The oldDotX position of the center of the Dot.
+   * @param oldDotY      The oldDotY position of the center of the Dot.
+   * @param radius       The radius of the DOt, in pixels.
    */
   Dot(float x, float y, float radius) {
-    this.x = x;
-    this.y = y;
-    setRadius(radius);
+    this.radius = 2 * radius;
+    divide(x, y);
   }
 
   /**
-   * Draw the Dot to the screen.
+   * Draw the Dot to the screen. Return True iff dot is done animating. 
+   * Important we check this at time of drawing and not before or after 
+   * so we do not get innacurate results due to imprecise timing.
    */
+  boolean drawDot(float oldDotX, float oldDotY) {
+    boolean doneAnimating = false;
+    float displayX, displayY, displayR, percentComplete;
+    long timeSinceDivision = millis() - timeLastDivided;
+    if (timeSinceDivision >= ANIMATION_TIME) {
+      percentComplete = 1;
+      doneAnimating = true;
+    } else {
+      percentComplete = (float) timeSinceDivision / ANIMATION_TIME;
+    }
+    float xDiff = x - oldDotX;
+    float yDiff = y - oldDotY;
+    float rDiff = -radius; //radius - oldRadius = radius - 2*radius = -radius
+    displayX = oldDotX + (percentComplete * xDiff);
+    displayY = oldDotY + (percentComplete * yDiff);
+    displayR = (2 * radius) + (percentComplete * rDiff);
+    fill(dotColor);
+    ellipse(displayX, displayY, displayR, displayR);
+    return doneAnimating;
+  }
+  
   void drawDot() {
     fill(dotColor);
     ellipse(x, y, radius, radius);
+  }
+
+  void divide(float x, float y) {
+    this.x = x;
+    this.y = y;
+    radius /= 2;
+    calculateColor();
+    timeLastDivided = millis();
   }
 
   /**
@@ -78,29 +113,11 @@ class Dot {
   }
 
   /**
-   * Set the y position of the center of the Dot.
-   * @param y the new x position of the center of the Dot.
-   */
-  void setY(float y) {
-    this.y = y;
-  }
-
-  /**
    * Return the radius of the Dot.
    * @return The radius of the Dot.
    */
   float getRadius() {
     return radius;
-  }
-
-  /**
-   * Set the radius the Dot and update the color accordingly. Indicates a division.
-   * @param radius The new radius of the Dot.
-   */
-  void setRadius(float radius) {
-    this.radius = radius;   
-    calculateColor();
-    timeLastDivided = millis();
   }
 
   /**
@@ -143,11 +160,11 @@ class Dot {
 
   /**
    * Return true iff radius is larger than the minimal Dot radius and the Dot hasn't been divided 
-   * in the last DELAY_UNTIL_DIVISIBLE seconds, indicating that the dot can be divided.
+   * in the last DELAY_UNTIL_DIVISIBLE milliseconds, indicating that the dot can be divided.
    *
    * @return true iff the dot can be divided.
    */
-  boolean isDivisible() {
-    return (millis() - timeLastDivided) > DELAY_UNTIL_DIVISIBLE && radius > MIN_DOT_SIZE;
+  boolean isAnimating() {
+    return (millis() - timeLastDivided) <= ANIMATION_TIME;
   }
 }

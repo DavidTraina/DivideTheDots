@@ -3,23 +3,15 @@
  * The dots act like pixels to reveal a picture.
  */
 
-//TODO: make image random and have an image select mode, animation
+//TODO: animation
 import java.util.LinkedList;
+import java.util.Arrays;
 
 /**
  * The maximum number of times a dot can be divided.
  */
 private final int MAX_DOT_DIVISIONS = 9; 
 
-/**
- * The x position of the cursor in the previous frame.
- */
-private int oldX;
-
-/**
- * The y position of the cursor in the previous frame.
- */
-private int oldY;
 
 /**
  * All the Dots on the screen.
@@ -30,7 +22,11 @@ private LinkedList<Dot> dots;
  * The new Dots that were created during the division of another Dot during the current frame. Contents 
  * should be added to dots and then cleared in every frame a division happens.
  */
-private ArrayList<Dot> newDividedDots;
+//private  ArrayList<Dot> newDividedDots = new ArrayList<Dot>();
+
+private LinkedList<AnimatedSection> sections;
+
+//private  LinkedList<Dot> animatingDots = new LinkedList<Dot>(); 
 
 /**
  * The minimal radius of a dot, in pixels.
@@ -52,12 +48,16 @@ PVector cursorPath;
  * Sets up the program, runs one time only on start-up.
  */
 void setup() {
-   String photoName;
+  /// Photo Stuff ///
+  String photoName;
+
   /**
    * Set true for a random photo each time the program starts.
    */
-  boolean randomImage = true;
+  boolean randomImage = false;
   if (!randomImage) {
+
+
     //////////////////////////////////
     // CHANGE BACKGROUND IMAGE HERE //
     //                              //
@@ -67,16 +67,15 @@ void setup() {
     // NOTE: Image should be square //
     // or it will appear distorted. //
     //////////////////////////////////
-    photoName = "lid.jpg";
+    photoName = "circleGame.jpg";
   } else {
     // Change path to images as required, should be in data folder.
-    File pathToImages = new File("C:\\Users\\David\\Dropbox\\Processing\\DivideTheDots\\data\\");
+    File pathToImages = new File("C:\\Users\\David\\Dropbox\\Processing\\DotsSandbox\\DivideTheDots\\data");
     String[] photoNames = pathToImages.list();
     photoName = photoNames[floor(random(photoNames.length))];
   }
   photo = loadImage(photoName);
-  dots = new LinkedList<Dot>();
-  newDividedDots = new ArrayList<Dot>();
+
   // Cannot use variables in size(), assuming displayHeight < dislayWidth;
   size(displayHeight, displayHeight); 
 
@@ -84,19 +83,19 @@ void setup() {
 
   frameRate(100);
 
-  smooth(2);
+  //smooth(2);
   noStroke();
   ellipseMode(RADIUS);
   rectMode(CENTER);
-
-  oldX = mouseX;
-  oldY = mouseY;
-
   MIN_DOT_SIZE = min(height, width) / pow(2, MAX_DOT_DIVISIONS);
 
+  sections = new LinkedList<AnimatedSection>();
+  dots = new LinkedList<Dot>();
+  Dot firstDot = new Dot(width / 2, height / 2, height / 2);
+  dots.add(firstDot);
+
   background(0);
-  dots.add(new Dot(width / 2, height / 2, width / 2));
-  dots.get(0).drawDot();
+  firstDot.drawDot();
 }
 
 /**
@@ -104,53 +103,41 @@ void setup() {
  */
 void draw() {
   println(frameRate);
-  cursorPath = new PVector(mouseX - oldX, mouseY - oldY);
+  drawSections();
+
+  cursorPath = new PVector(mouseX - pmouseX, mouseY - pmouseY);
 
   // If the cursor has moved. 
   if (cursorPath.magSq() >= 1) { 
+    LinkedList<Dot> tempDotsToRemove = new LinkedList<Dot>();
     for (Dot dot : dots) {
+      //animating dots
       float radius = dot.getRadius();
       // dot should only divide if cursor starts outside of dot and then enters it.
-      boolean pathStartsOutsideDot = dist(dot.getX(), dot.getY(), oldX, oldY) > radius; 
+      boolean pathStartsOutsideDot = dist(dot.getX(), dot.getY(), pmouseX, pmouseY) > radius; 
       // if the distance from the center of dot to cursorPath is <= radius, then cursorPath intersects dot.
-      if (dot.isDivisible() && pathStartsOutsideDot && distToCursorPath(dot) <= radius) {
-        // Black out the dot we are going to divide.
-        fill(0);
-        rect(dot.getX(), dot.getY(), radius * 2, radius * 2);
-        divide(dot);
-        // Draw the modified version of dot because it will not be newDividedDots.
-        dot.drawDot();
+      if (radius > MIN_DOT_SIZE && pathStartsOutsideDot && pathIntersectsDot(dot)) {
+        sections.add(new AnimatedSection(dot));
+        tempDotsToRemove.add(dot);
       }
     }
-    // We do this outside the loop for efficiency, so we do not draw a dot more than once.
-    for (Dot newDot : newDividedDots) {
-      newDot.drawDot();
-    }
-    dots.addAll(newDividedDots);
-    newDividedDots.clear();
-
-    oldX = mouseX;
-    oldY = mouseY;
+    dots.removeAll(tempDotsToRemove);
   }
 }
 
-/**
- * Convert dot into a 2x2 formation of 4 dots occupying the same space. The radius of the new dots will be half the radius of dot.
- *
- * @param dot The Dot to divide
- */
-void divide(Dot dot) {
-  float halfRadius = dot.getRadius() / 2;
-  // Top right of 2x2 formation.
-  newDividedDots.add(new Dot(dot.getX() + halfRadius, dot.getY() - halfRadius, halfRadius));
-  // Bottom left of 2x2 formation.
-  newDividedDots.add(new Dot(dot.getX() - halfRadius, dot.getY() + halfRadius, halfRadius));
-  // Bottom right of 2x2 formation.
-  newDividedDots.add(new Dot(dot.getX() + halfRadius, dot.getY() + halfRadius, halfRadius)); 
-  // Convert dot to top left of 2x2 formation (avoids deletion and creation of another dot).
-  dot.setX(dot.getX() - halfRadius);
-  dot.setY(dot.getY() - halfRadius);
-  dot.setRadius(halfRadius);
+void drawSections() {
+  LinkedList<AnimatedSection> tempSectionsToRemove = new LinkedList<AnimatedSection>();
+
+  for (AnimatedSection section : sections) {
+    if (section.drawSection()) {
+      for (Dot dot : section.getDotsCreated()) {
+        dots.add(dot);
+      }
+      tempSectionsToRemove.add(section);
+    }
+  }
+  sections.removeAll(tempSectionsToRemove);
+  //tempSectionsToRemove.clear();
 }
 
 /**
@@ -160,7 +147,7 @@ void divide(Dot dot) {
  * @return the minimal distance from the center of dot to anywhere on the cursorPath vector.
  */
 private float distToCursorPath(Dot dot) {
-  PVector oldCursorToDot = new PVector(dot.getX() - oldX, dot.getY() - oldY); // Vector from old cursor position to center of dot.
+  PVector oldCursorToDot = new PVector(dot.getX() - pmouseX, dot.getY() - pmouseY); // Vector from old cursor position to center of dot.
   PVector currentCursorToDot = new PVector(dot.getX() - mouseX, dot.getY() - mouseY); // Vector from current cursor position to center of dot.
   PVector reverseCursorPath = PVector.mult(cursorPath, -1); // Vector from the current cursor position to the old cursor position.
 
@@ -172,7 +159,7 @@ private float distToCursorPath(Dot dot) {
    point; the old cursor position.
    */
   if (angleOldToCurrent_OldToDot > HALF_PI) {
-    return dist(dot.getX(), dot.getY(), oldX, oldY);
+    return dist(dot.getX(), dot.getY(), pmouseX, pmouseY);
   }
 
   // Case (2)
@@ -196,8 +183,37 @@ private float distToCursorPath(Dot dot) {
   return sin(angleOldToCurrent_OldToDot) * oldCursorToDot.mag(); // Angles always positive for non-zero vectors -> sin(angle) is positive.
 }
 
+boolean pathIntersectsDot(Dot dot) {
+  float requiredDistance;
+  float radius = dot.getRadius();
+  if (MAX_DOT_DIVISIONS > 8) {
+    // It's annoyingly difficult to clear the very small dots, so we make it slightly more forgiving.
+       requiredDistance = max(radius, min(height, width) / (pow(2, 7) * 1.4));
+  }
+  else {
+    requiredDistance = radius;
+  }
+  return distToCursorPath(dot) <= requiredDistance;
+}
+
+//// Misses dots sometimes??
+//private float calcDistance(Dot dot) {
+//  PVector oldCursorToDot = new PVector(dot.getX() - pmouseX, dot.getY() - pmouseY); // Vector from old cursor position to center of dot.
+//  // a onto b
+//  float magnitudeOfProjectionOntoCursorPath = PVector.dot(cursorPath, oldCursorToDot) / cursorPath.mag();
+//  if (magnitudeOfProjectionOntoCursorPath <= 0) {
+//    return dist(dot.getX(), dot.getY(), pmouseX, pmouseY);
+//  } else if (magnitudeOfProjectionOntoCursorPath >= cursorPath.mag()) {
+//    return dist(dot.getX(), dot.getY(), mouseX, mouseY);
+//  } else {
+//    PVector projectionOntoCursorPath = PVector.mult(cursorPath, magnitudeOfProjectionOntoCursorPath); 
+//    PVector closestPoint = PVector.add(new PVector(pmouseX, pmouseY), projectionOntoCursorPath);
+//    return (PVector.sub(closestPoint, new PVector(dot.getX(), dot.getY()))).mag();
+//  }
+//}
+
 void keyPressed() {
-  if (key == ' ') {
-    setup();
+  if (key == ' ' || key == 'n' || key == 'r') {
+      setup();
   }
 }
