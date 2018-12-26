@@ -9,7 +9,7 @@ import java.util.LinkedList;
 /**
  * The maximum number of times a dot can be divided.
  */
-private final int MAX_DOT_DIVISIONS = 8; 
+private final int MAX_DOT_DIVISIONS = 9; 
 
 /**
  * The x position of the cursor in the previous frame.
@@ -24,13 +24,13 @@ private int oldY;
 /**
  * All the Dots on the screen.
  */
-private final LinkedList<Dot> dots = new LinkedList<Dot>();
+private LinkedList<Dot> dots;
 
 /**
  * The new Dots that were created during the division of another Dot during the current frame. Contents 
  * should be added to dots and then cleared in every frame a division happens.
  */
-private final ArrayList<Dot> newDividedDots = new ArrayList<Dot>();
+private ArrayList<Dot> newDividedDots;
 
 /**
  * The minimal radius of a dot, in pixels.
@@ -67,15 +67,16 @@ void setup() {
     // NOTE: Image should be square //
     // or it will appear distorted. //
     //////////////////////////////////
-    photoName = "giraffe.jpg";
+    photoName = "lid.jpg";
   } else {
     // Change path to images as required, should be in data folder.
-    File pathToImages = new File("C:\\Users\\David\\Dropbox\\Processing\\DivideTheDots\\data");
+    File pathToImages = new File("C:\\Users\\David\\Dropbox\\Processing\\DivideTheDots\\data\\");
     String[] photoNames = pathToImages.list();
     photoName = photoNames[floor(random(photoNames.length))];
   }
   photo = loadImage(photoName);
-
+  dots = new LinkedList<Dot>();
+  newDividedDots = new ArrayList<Dot>();
   // Cannot use variables in size(), assuming displayHeight < dislayWidth;
   size(displayHeight, displayHeight); 
 
@@ -170,7 +171,7 @@ private float distToCursorPath(Dot dot) {
    vector and the point on the cursorPath vector which is closest to dot is the starting 
    point; the old cursor position.
    */
-  if (angleOldToCurrent_OldToDot > PI / 2) {
+  if (angleOldToCurrent_OldToDot > HALF_PI) {
     return dist(dot.getX(), dot.getY(), oldX, oldY);
   }
 
@@ -181,7 +182,7 @@ private float distToCursorPath(Dot dot) {
    vector and the point on the cursorPath vector which is closest to dot is the ending point; the 
    current cursor position.
    */
-  if (angleCurrentToOld_CurrentToDot > PI / 2) {
+  if (angleCurrentToOld_CurrentToDot > HALF_PI) {
     return dist(dot.getX(), dot.getY(), mouseX, mouseY);
   }
 
@@ -193,4 +194,10 @@ private float distToCursorPath(Dot dot) {
    is the minimal distance from dot to cursorPath. We calculate this by forming a right triangle and using trigonometry.
    */
   return sin(angleOldToCurrent_OldToDot) * oldCursorToDot.mag(); // Angles always positive for non-zero vectors -> sin(angle) is positive.
+}
+
+void keyPressed() {
+  if (key == ' ') {
+    setup();
+  }
 }
