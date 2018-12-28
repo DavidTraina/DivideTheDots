@@ -1,16 +1,24 @@
+import java.util.LinkedList;
+
 /**
  * A game where the user moves the cursor to divide the single starting dot into successivly smaller dots. 
  * The dots act like pixels to reveal a picture.
  */
 
-//TODO: animation
-import java.util.LinkedList;
-import java.util.Arrays;
-
 /**
  * The maximum number of times a dot can be divided.
  */
-private final int MAX_DOT_DIVISIONS = 9; 
+private static final int MAX_DOT_DIVISIONS = 9; 
+
+/**
+ * The minimal radius of a dot, in pixels.
+ */
+private float MIN_DOT_SIZE;
+
+/**
+ * The smallest radius a dot can have before the program makes it easier to clear.
+ */
+private static float MIN_UNASSISTED_RADIUS; 
 
 
 /**
@@ -19,19 +27,9 @@ private final int MAX_DOT_DIVISIONS = 9;
 private LinkedList<Dot> dots;
 
 /**
- * The new Dots that were created during the division of another Dot during the current frame. Contents 
- * should be added to dots and then cleared in every frame a division happens.
+ * All the AnimatedSections currently being animated (drawn each frame).
  */
-//private  ArrayList<Dot> newDividedDots = new ArrayList<Dot>();
-
 private LinkedList<AnimatedSection> sections;
-
-//private  LinkedList<Dot> animatingDots = new LinkedList<Dot>(); 
-
-/**
- * The minimal radius of a dot, in pixels.
- */
-private float MIN_DOT_SIZE;
 
 /**
  * The background image that will be revealed.
@@ -45,49 +43,45 @@ static PImage photo;
 PVector cursorPath;
 
 /**
- * Sets up the program, runs one time only on start-up.
+ * Sets up the program, runs at program start-up / reset.
  */
 void setup() {
-  /// Photo Stuff ///
-  String photoName;
-
-  /**
-   * Set true for a random photo each time the program starts.
-   */
-  boolean randomImage = false;
-  if (!randomImage) {
-
-
-    //////////////////////////////////
-    // CHANGE BACKGROUND IMAGE HERE //
-    //                              //
-    // Make sure to set randomImage //
-    // to flase above.              //
-    //                              //
-    // NOTE: Image should be square //
-    // or it will appear distorted. //
-    //////////////////////////////////
-    photoName = "circleGame.jpg";
-  } else {
-    // Change path to images as required, should be in data folder.
-    File pathToImages = new File("C:\\Users\\David\\Dropbox\\Processing\\DotsSandbox\\DivideTheDots\\data");
-    String[] photoNames = pathToImages.list();
-    photoName = photoNames[floor(random(photoNames.length))];
-  }
-  photo = loadImage(photoName);
-
+  ////////////////////////////////////
+  //  CHANGE BACKGROUND IMAGE HERE  //
+  //                                //
+  // If you would like a non-random //
+  // image, add the file-name of    //
+  // the image in quotes as an      //
+  // argument to the setupPhoto()   //
+  // call below. For example,       //
+  // setupPhoto("example.jpg")      //
+  // If you would like a random     //
+  // image, use the empty string    //
+  // as the argument.               //
+  //                                //
+  // NOTE: If you use your own      //
+  // image, place the image in the  //
+  // data folder. The image should  //
+  // be square or it will appear    //
+  // distorted.                     //
+  ////////////////////////////////////
+  setupPhoto(""); //
+  ////////////////////////////////////
+  
   // Cannot use variables in size(), assuming displayHeight < dislayWidth;
   size(displayHeight, displayHeight); 
-
   photo.resize(width, height);
-
+  // Update the pixels[] array for photo
+  photo.loadPixels();
+  
   frameRate(100);
-
-  //smooth(2);
   noStroke();
   ellipseMode(RADIUS);
   rectMode(CENTER);
-  MIN_DOT_SIZE = min(height, width) / pow(2, MAX_DOT_DIVISIONS);
+  int minHeightWidth = min(height, width);
+  
+  MIN_DOT_SIZE = minHeightWidth / pow(2, MAX_DOT_DIVISIONS);
+  MIN_UNASSISTED_RADIUS = minHeightWidth / pow(2, 7);
 
   sections = new LinkedList<AnimatedSection>();
   dots = new LinkedList<Dot>();
@@ -98,24 +92,35 @@ void setup() {
   firstDot.drawDot();
 }
 
+private void setupPhoto(String photoName) {
+  boolean validName = false;
+  File pathToImages = new File("C:\\Users\\David\\Dropbox\\Processing\\DivideTheDots\\data");
+  String[] photoNames = pathToImages.list();  
+  for (String name : photoNames) {
+    if (name.equals(photoName)) {
+      validName = true;
+      break;
+    }
+  }
+  if (!validName) {
+    photoName = photoNames[(int) random(photoNames.length)];
+  }
+  photo = loadImage(photoName);
+}
+
 /**
  * Runs frameRate times per second. If cursor has moved then iterate through the dots on the screen and divide them as necessary.
  */
 void draw() {
-  println(frameRate);
   drawSections();
-
   cursorPath = new PVector(mouseX - pmouseX, mouseY - pmouseY);
-
   // If the cursor has moved. 
   if (cursorPath.magSq() >= 1) { 
     LinkedList<Dot> tempDotsToRemove = new LinkedList<Dot>();
     for (Dot dot : dots) {
-      //animating dots
       float radius = dot.getRadius();
       // dot should only divide if cursor starts outside of dot and then enters it.
       boolean pathStartsOutsideDot = dist(dot.getX(), dot.getY(), pmouseX, pmouseY) > radius; 
-      // if the distance from the center of dot to cursorPath is <= radius, then cursorPath intersects dot.
       if (radius > MIN_DOT_SIZE && pathStartsOutsideDot && pathIntersectsDot(dot)) {
         sections.add(new AnimatedSection(dot));
         tempDotsToRemove.add(dot);
@@ -137,7 +142,6 @@ void drawSections() {
     }
   }
   sections.removeAll(tempSectionsToRemove);
-  //tempSectionsToRemove.clear();
 }
 
 /**
@@ -184,36 +188,20 @@ private float distToCursorPath(Dot dot) {
 }
 
 boolean pathIntersectsDot(Dot dot) {
-  float requiredDistance;
+  float maxDistance;
   float radius = dot.getRadius();
-  if (MAX_DOT_DIVISIONS > 8) {
+  if (radius < MIN_UNASSISTED_RADIUS) {
     // It's annoyingly difficult to clear the very small dots, so we make it slightly more forgiving.
-       requiredDistance = max(radius, min(height, width) / (pow(2, 7) * 1.4));
+    maxDistance =  radius * 1.4;
+  } else {
+    maxDistance = radius;
   }
-  else {
-    requiredDistance = radius;
-  }
-  return distToCursorPath(dot) <= requiredDistance;
+  return distToCursorPath(dot) <= maxDistance;
 }
-
-//// Misses dots sometimes??
-//private float calcDistance(Dot dot) {
-//  PVector oldCursorToDot = new PVector(dot.getX() - pmouseX, dot.getY() - pmouseY); // Vector from old cursor position to center of dot.
-//  // a onto b
-//  float magnitudeOfProjectionOntoCursorPath = PVector.dot(cursorPath, oldCursorToDot) / cursorPath.mag();
-//  if (magnitudeOfProjectionOntoCursorPath <= 0) {
-//    return dist(dot.getX(), dot.getY(), pmouseX, pmouseY);
-//  } else if (magnitudeOfProjectionOntoCursorPath >= cursorPath.mag()) {
-//    return dist(dot.getX(), dot.getY(), mouseX, mouseY);
-//  } else {
-//    PVector projectionOntoCursorPath = PVector.mult(cursorPath, magnitudeOfProjectionOntoCursorPath); 
-//    PVector closestPoint = PVector.add(new PVector(pmouseX, pmouseY), projectionOntoCursorPath);
-//    return (PVector.sub(closestPoint, new PVector(dot.getX(), dot.getY()))).mag();
-//  }
-//}
 
 void keyPressed() {
   if (key == ' ' || key == 'n' || key == 'r') {
-      setup();
+    setup();
+    println("reset");
   }
 }

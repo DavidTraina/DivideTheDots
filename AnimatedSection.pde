@@ -1,17 +1,15 @@
 class AnimatedSection {
-  float x;
-  float y;
-  Dot[] animatedDots;
-  float sideLength;
-  
+  private float x;
+  private float y;
+  private float sideLength;
+  private Dot[] animatedDots;
+
   AnimatedSection(Dot dot) {
     x = dot.getX();
     y = dot.getY();
     sideLength = dot.getRadius() * 2;
     
     float halfOldRadius = sideLength / 4;
-    //dot.divide(x - halfOldRadius, y - halfOldRadius);
-    //Dot topLeft = dot; // Avoid unecessary creation/deletion
     Dot topLeft = new Dot(x - halfOldRadius, y - halfOldRadius, halfOldRadius);
     Dot topRight = new Dot(x + halfOldRadius, y - halfOldRadius, halfOldRadius);
     Dot bottomLeft = new Dot(x - halfOldRadius, y + halfOldRadius, halfOldRadius);

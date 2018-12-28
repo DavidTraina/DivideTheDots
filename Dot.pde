@@ -1,7 +1,7 @@
 /**
  * A Dot; represented as a single circle on-screen.
  */
-class Dot {
+private class Dot {
 
   /**
    * The x position of the center of the Dot.
@@ -33,75 +33,27 @@ class Dot {
    */
   public static final int ANIMATION_TIME = 210;  
 
-
-
   /**
-   * Create a new Dot. This counts as a division because we call setRadius().
+   * Create a new Dot.
    *
    * @param x            The x position of the center of the Dot.
    * @param y            The y position of the center of the Dot.
-   * @param oldDotX      The oldDotX position of the center of the Dot.
-   * @param oldDotY      The oldDotY position of the center of the Dot.
-   * @param radius       The radius of the DOt, in pixels.
+   * @param radius       The radius of the Dot, in pixels.
    */
   Dot(float x, float y, float radius) {
-    this.radius = 2 * radius;
-    divide(x, y);
-  }
-
-  /**
-   * Draw the Dot to the screen. Return True iff dot is done animating. 
-   * Important we check this at time of drawing and not before or after 
-   * so we do not get innacurate results due to imprecise timing.
-   */
-  boolean drawDot(float oldDotX, float oldDotY) {
-    boolean doneAnimating = false;
-    float displayX, displayY, displayR, percentComplete;
-    long timeSinceDivision = millis() - timeLastDivided;
-    if (timeSinceDivision >= ANIMATION_TIME) {
-      percentComplete = 1;
-      doneAnimating = true;
-    } else {
-      percentComplete = (float) timeSinceDivision / ANIMATION_TIME;
-    }
-    float xDiff = x - oldDotX;
-    float yDiff = y - oldDotY;
-    float rDiff = -radius; //radius - oldRadius = radius - 2*radius = -radius
-    displayX = oldDotX + (percentComplete * xDiff);
-    displayY = oldDotY + (percentComplete * yDiff);
-    displayR = (2 * radius) + (percentComplete * rDiff);
-    fill(dotColor);
-    ellipse(displayX, displayY, displayR, displayR);
-    return doneAnimating;
-  }
-  
-  void drawDot() {
-    fill(dotColor);
-    ellipse(x, y, radius, radius);
-  }
-
-  void divide(float x, float y) {
     this.x = x;
     this.y = y;
-    radius /= 2;
+    this.radius = radius;
     calculateColor();
     timeLastDivided = millis();
   }
-
+  
   /**
    * Return the x position of the center of the Dot.
    * @return The x position of the center of the Dot.
    */
   float getX() {
     return x;
-  }
-
-  /**
-   * Set the x position of the center of the Dot.
-   * @param x the new x position of the center of the Dot.
-   */
-  void setX(float x) {
-    this.x = x;
   }
 
   /**
@@ -121,15 +73,49 @@ class Dot {
   }
 
   /**
+   * Draw the Dot to the screen with a radius and position based on how long 
+   * the Dot has been animataing. Return True iff dot is done animating. 
+   * Important we check this at time of drawing and not before or after 
+   * so we do not get innacurate results due to imprecise timing.
+   *
+   * @param oldDotX The x position of the Dot that was divided to create this Dot.
+   * @param oldDotY The y position of the Dot that was divided to create this Dot.
+   * @return true iff the dot is finished animating.
+   */
+  boolean drawDot(float oldDotX, float oldDotY) {
+    fill(dotColor);
+    long timeSinceDivision = millis() - timeLastDivided;
+    if (timeSinceDivision >= ANIMATION_TIME) {
+      ellipse(x, y, radius, radius);
+      return true;
+    }
+    float percentComplete = (float) timeSinceDivision / ANIMATION_TIME;
+    float xDiff = x - oldDotX;
+    float yDiff = y - oldDotY;
+    float rDiff = -radius; //radius - oldRadius = radius - 2*radius = -radius
+    float displayX = oldDotX + (percentComplete * xDiff);
+    float displayY = oldDotY + (percentComplete * yDiff);
+    float displayR = (2 * radius) + (percentComplete * rDiff);
+    ellipse(displayX, displayY, displayR, displayR);
+
+    return false;
+  }
+
+  /**
+   * Draw the Dot to the screen, unanimated, at position x, y with radius radius. 
+   */
+  void drawDot() {
+    fill(dotColor);
+    ellipse(x, y, radius, radius);
+  }
+
+  /**
    * Caculate the value of dotColor; the fill color of the Dot. Accomplishes this by 
    * averaging the colors of the pixels of photo which are overapped by the square 
-   * centered at (x,y) with side length 2* radius. This is the square centered around 
+   * centered at (x,y) with side length 2*radius. This is the square centered around 
    * the Dot and of minimal size such that it still contains the Dot.
    */
   private void calculateColor() {
-    // Update the pixels[] array for photo
-    photo.loadPixels();
-
     // Accumulated r, g, b values 
     float r = 0;
     float g = 0;
@@ -156,15 +142,5 @@ class Dot {
     g /= numIterations;
     b /= numIterations;
     this.dotColor = color(r, g, b);
-  }
-
-  /**
-   * Return true iff radius is larger than the minimal Dot radius and the Dot hasn't been divided 
-   * in the last DELAY_UNTIL_DIVISIBLE milliseconds, indicating that the dot can be divided.
-   *
-   * @return true iff the dot can be divided.
-   */
-  boolean isAnimating() {
-    return (millis() - timeLastDivided) <= ANIMATION_TIME;
   }
 }
