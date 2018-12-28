@@ -22,7 +22,7 @@ private static float MIN_UNASSISTED_RADIUS;
 
 
 /**
- * All the Dots on the screen.
+ * All the Dots on the screen that are greater than MIN_DOT_SIZE.
  */
 private LinkedList<Dot> dots;
 
@@ -113,6 +113,7 @@ private void setupPhoto(String photoName) {
  */
 void draw() {
   drawSections();
+  println(dots.size() +" "+ frameRate);
   cursorPath = new PVector(mouseX - pmouseX, mouseY - pmouseY);
   // If the cursor has moved. 
   if (cursorPath.magSq() >= 1) { 
@@ -121,7 +122,7 @@ void draw() {
       float radius = dot.getRadius();
       // dot should only divide if cursor starts outside of dot and then enters it.
       boolean pathStartsOutsideDot = dist(dot.getX(), dot.getY(), pmouseX, pmouseY) > radius; 
-      if (radius > MIN_DOT_SIZE && pathStartsOutsideDot && pathIntersectsDot(dot)) {
+      if (pathStartsOutsideDot && pathIntersectsDot(dot)) {
         sections.add(new AnimatedSection(dot));
         tempDotsToRemove.add(dot);
       }
@@ -135,8 +136,13 @@ void drawSections() {
 
   for (AnimatedSection section : sections) {
     if (section.drawSection()) {
-      for (Dot dot : section.getDotsCreated()) {
-        dots.add(dot);
+      Dot[] dotsCreated = section.getDotsCreated();
+      // All dots in section same size, if Dot is min size, don't add the Dots from this 
+      // section to dots because we don't want to divide them anymore.
+      if (dotsCreated[0].getRadius() > MIN_DOT_SIZE) { 
+        for (Dot dot : dotsCreated) {
+          dots.add(dot);
+        }
       }
       tempSectionsToRemove.add(section);
     }
