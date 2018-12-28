@@ -1,10 +1,14 @@
-import java.util.LinkedList;
+// TODO: Alignment is off for small dots. Doesn't seem very high resolution and tiny dots kind of melt together.
+//       Also get weird black lines (only in processing.js)
+// TODO: I think ArrayList is much slower than LinkedList, but can't use LinkedList with processing.js.
+
+/* @pjs preload="zebra.jpg", "cow.jpg", "elephant.jpg", "giraffe.jpg", "gorilla.jpg", "hippo.jpg", "penguin.jpg", "sloth.jpg", "colors.png", "tiger.jpg"; */
 
 /**
  * A game where the user moves the cursor to divide the single starting dot into successivly smaller dots. 
  * The dots act like pixels to reveal a picture.
  */
-
+ 
 /**
  * The maximum number of times a dot can be divided.
  */
@@ -18,18 +22,18 @@ private float MIN_DOT_SIZE;
 /**
  * The smallest radius a dot can have before the program makes it easier to clear.
  */
-private static float MIN_UNASSISTED_RADIUS; 
+private static float MIN_UNASISTED_RADIUS; 
 
 
 /**
- * All the Dots on the screen that are greater than MIN_DOT_SIZE.
+ * All the Dots on the screen.
  */
-private LinkedList<Dot> dots;
+private ArrayList<Dot> dots;
 
 /**
  * All the AnimatedSections currently being animated (drawn each frame).
  */
-private LinkedList<AnimatedSection> sections;
+private ArrayList<AnimatedSection> sections;
 
 /**
  * The background image that will be revealed.
@@ -46,45 +50,40 @@ PVector cursorPath;
  * Sets up the program, runs at program start-up / reset.
  */
 void setup() {
-  ////////////////////////////////////
-  //  CHANGE BACKGROUND IMAGE HERE  //
-  //                                //
-  // If you would like a non-random //
-  // image, add the file-name of    //
-  // the image in quotes as an      //
-  // argument to the setupPhoto()   //
-  // call below. For example,       //
-  // setupPhoto("example.jpg")      //
-  // If you would like a random     //
-  // image, use the empty string    //
-  // as the argument.               //
-  //                                //
-  // NOTE: If you use your own      //
-  // image, place the image in the  //
-  // data folder. The image should  //
-  // be square or it will appear    //
-  // distorted.                     //
-  ////////////////////////////////////
+  
+  ///////////////////////////////////////////////////////////////////
+  // CHANGE BACKGROUND IMAGE HERE                                 //
+  //                                                               //
+  // If you would like a non-random image, add the file-name of    //
+  // the image in quotes as an argument to the setupPhoto() call   //
+  // below. For example, setupPhoto("example.jpg"). If  you would  //
+  // like a random image you may use the empty String as the       //
+  // argument.                                                     //
+  // If you upload your own image, be sure to preload it in the    //
+  // @pjs directive at the top of the program and add it to        //
+  // fileNames.txt                                                 //
+  //                                                               //
+  // NOTE: Image should be square or it will appear distorted.     //
+  ///////////////////////////////////////////////////////////////////
   setupPhoto(""); //
-  ////////////////////////////////////
+  ///////////////////////////////////////////////////////////////////
   
-  // Cannot use variables in size(), assuming displayHeight < dislayWidth;
-  size(displayHeight, displayHeight); 
+  size(800, 800); 
   photo.resize(width, height);
-  // Update the pixels[] array for photo
-  photo.loadPixels();
-  
   frameRate(100);
   noStroke();
   ellipseMode(RADIUS);
   rectMode(CENTER);
-  int minHeightWidth = min(height, width);
+  int minHeightWidth = min(width, height);
   
   MIN_DOT_SIZE = minHeightWidth / pow(2, MAX_DOT_DIVISIONS);
-  MIN_UNASSISTED_RADIUS = minHeightWidth / pow(2, 7);
+  MIN_UNASISTED_RADIUS = minHeightWidth / pow(2, 7);
 
-  sections = new LinkedList<AnimatedSection>();
-  dots = new LinkedList<Dot>();
+  // Update the pixels[] array for photo
+  photo.loadPixels();
+  
+  sections = new ArrayList<AnimatedSection>();
+  dots = new ArrayList<Dot>();
   Dot firstDot = new Dot(width / 2, height / 2, height / 2);
   dots.add(firstDot);
 
@@ -94,9 +93,7 @@ void setup() {
 
 private void setupPhoto(String photoName) {
   boolean validName = false;
-  // Change file path as to the location of the data folder on your machine.
-  File pathToImages = new File("C:\\Users\\David\\Dropbox\\Processing\\DivideTheDots\\DivideTheDots\\data");
-  String[] photoNames = pathToImages.list();  
+  String[] photoNames = loadStrings("fileNames.txt");
   for (String name : photoNames) {
     if (name.equals(photoName)) {
       validName = true;
@@ -114,11 +111,10 @@ private void setupPhoto(String photoName) {
  */
 void draw() {
   drawSections();
-  println(dots.size() +" "+ frameRate);
   cursorPath = new PVector(mouseX - pmouseX, mouseY - pmouseY);
   // If the cursor has moved. 
   if (cursorPath.magSq() >= 1) { 
-    LinkedList<Dot> tempDotsToRemove = new LinkedList<Dot>();
+    ArrayList<Dot> tempDotsToRemove = new ArrayList<Dot>();
     for (Dot dot : dots) {
       float radius = dot.getRadius();
       // dot should only divide if cursor starts outside of dot and then enters it.
@@ -133,7 +129,7 @@ void draw() {
 }
 
 void drawSections() {
-  LinkedList<AnimatedSection> tempSectionsToRemove = new LinkedList<AnimatedSection>();
+  ArrayList<AnimatedSection> tempSectionsToRemove = new ArrayList<AnimatedSection>();
 
   for (AnimatedSection section : sections) {
     if (section.drawSection()) {
@@ -141,7 +137,7 @@ void drawSections() {
       // All dots in section same size, if Dot is min size, don't add the Dots from this 
       // section to dots because we don't want to divide them anymore.
       if (dotsCreated[0].getRadius() > MIN_DOT_SIZE) { 
-        for (Dot dot : dotsCreated) {
+        for (Dot dot : section.getDotsCreated()) {
           dots.add(dot);
         }
       }
@@ -197,7 +193,7 @@ private float distToCursorPath(Dot dot) {
 boolean pathIntersectsDot(Dot dot) {
   float maxDistance;
   float radius = dot.getRadius();
-  if (radius < MIN_UNASSISTED_RADIUS) {
+  if (radius < MIN_UNASISTED_RADIUS) {
     // It's annoyingly difficult to clear the very small dots, so we make it slightly more forgiving.
     maxDistance =  radius * 1.4;
   } else {
@@ -209,6 +205,5 @@ boolean pathIntersectsDot(Dot dot) {
 void keyPressed() {
   if (key == ' ' || key == 'n' || key == 'r') {
     setup();
-    println("reset");
   }
 }

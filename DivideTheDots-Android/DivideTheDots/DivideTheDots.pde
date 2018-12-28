@@ -69,12 +69,12 @@ void setup() {
   ////////////////////////////////////
   
   // Cannot use variables in size(), assuming displayHeight < dislayWidth;
-  size(displayHeight, displayHeight); 
+  size(displayWidth, displayWidth); 
   photo.resize(width, height);
   // Update the pixels[] array for photo
   photo.loadPixels();
   
-  frameRate(100);
+  frameRate(60);
   noStroke();
   ellipseMode(RADIUS);
   rectMode(CENTER);
@@ -94,9 +94,7 @@ void setup() {
 
 private void setupPhoto(String photoName) {
   boolean validName = false;
-  // Change file path as to the location of the data folder on your machine.
-  File pathToImages = new File("C:\\Users\\David\\Dropbox\\Processing\\DivideTheDots\\DivideTheDots\\data");
-  String[] photoNames = pathToImages.list();  
+  String[] photoNames = loadStrings("fileNames.txt");
   for (String name : photoNames) {
     if (name.equals(photoName)) {
       validName = true;
@@ -114,7 +112,6 @@ private void setupPhoto(String photoName) {
  */
 void draw() {
   drawSections();
-  println(dots.size() +" "+ frameRate);
   cursorPath = new PVector(mouseX - pmouseX, mouseY - pmouseY);
   // If the cursor has moved. 
   if (cursorPath.magSq() >= 1) { 
