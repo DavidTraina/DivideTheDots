@@ -1,5 +1,5 @@
 # DivideTheDots
-This Project is written in Processing 3, a graphical library for Java.
+This Project is written in Java using Processing 3 (a graphical library).
 
 # Quick Start
 You can run a slightly altered version of this project online at: https://www.openprocessing.org/sketch/648372
